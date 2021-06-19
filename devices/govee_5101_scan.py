@@ -1,33 +1,28 @@
+''' tbsense_scan.py - scan for SiLabs BLE Thunderboard Sense 2 boards and read out certain sensor data
+    
+'''
 from bluepy.btle import *
 import struct
 import time, datetime
-import ThunderboardSensor
-import GoveeSensor
+import Thunderboard     # Silicon Labs Thunderboard sensor data routines which is in this directory. PYTHONPATH has to include this directory.
 
 # DEBUG=0 turns off messages, the higher the number the more messages are printed to the screen
 DEBUG = 5
 
-class SensorScanner:
-    """BLE scanner for temp/humidity sensors"""
-    def scan():
-        """Scan for sensors and return results sorted by type"""
-        scanner = Scanner()         # initialize BLE
-        devices = scanner.scan(4)   # scan for BLE devices for this many seconds
-        sensors = {                 # sort into a dictionary of lists, one for each sensor type
-            'Thunderboards': [],
-            'Govee': []
-        }
+def getThunderboards():
+    ''' Scan for TB2 boards for a few seconds and return all that are found'''
+    scanner = Scanner()         # initialize BLE
+    devices = scanner.scan(1.1)   # scan for BLE devices for this many seconds
+    tbsense = dict()
+    for dev in devices:
+        scanData = dev.getScanData()
+        for (adtype, desc, value) in scanData:
+            if desc == 'Complete Local Name':
+                if 'Thunder Sense #' in value:              # if the device is a TB2, then add it to tbsense
+                    deviceId = int(value.split('#')[-1])
+                    tbsense[deviceId] = Thunderboard.Thunderboard(dev)
 
-        for dev in devices:
-            scanData = dev.getScanData()
-            for (adtype, desc, value) in scanData:
-                if desc == 'Complete Local Name':
-                    if 'Thunder Sense #' in value:              # if the device is a TB2, then add it to tbsense
-                        sensors['Thunderboards'].push(ThunderboardSensor(dev))
-                    elif 'GVH5' in value:
-                        sensors['Govee'].push(GoveeSensor(dev))
-
-        return sensors
+    return tbsense
 
 def scanSensors(thunderboards):
 
