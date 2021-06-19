@@ -12,7 +12,7 @@ class SensorScanner:
     def scan():
         """Scan for sensors and return results sorted by type"""
         scanner = Scanner()         # initialize BLE
-        devices = scanner.scan(4)   # scan for BLE devices for this many seconds
+        devices = scanner.scan(4)   # scan for BLE devices for 4 seconds
         sensors = {                 # sort into a dictionary of lists, one for each sensor type
             'Thunderboards': [],
             'Govee': []
@@ -29,7 +29,7 @@ class SensorScanner:
 
         return sensors
 
-def scanSensors(thunderboards):
+    def scanSensors(thunderboards):
 
     for devId, tb in thunderboards.items():
 
