@@ -27,7 +27,9 @@ class SensorScanner:
                     if 'Thunder Sense #' in value:              # if the device is a TB2, then add it to tbsense
                         self.sensors['Thunderboards'].append(ThunderboardSensor(dev))
                     elif 'GVH5' in value:
-                        self.sensors['Govee'].append(GoveeSensor(dev))
+                        scanData = dev.getScanData()
+                        connection = Peripheral(dev)
+                        self.sensors['Govee'].append(GoveeSensor(scanData, connection))
 
     def scanGovee(self):
         for device in self.sensors['Govee']:
