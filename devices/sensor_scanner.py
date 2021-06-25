@@ -9,112 +9,93 @@ DEBUG = 5
 
 class SensorScanner:
     """BLE scanner for temp/humidity sensors"""
-    def scan():
-        """Scan for sensors and return results sorted by type"""
-        scanner = Scanner()         # initialize BLE
-        devices = scanner.scan(4)   # scan for BLE devices for 4 seconds
-        sensors = {                 # sort into a dictionary of lists, one for each sensor type
+    def __init__(self):
+        self.sensors = {
             'Thunderboards': [],
             'Govee': []
         }
+
+    def scan(self):
+        """Scan for sensors and return results sorted by type"""
+        scanner = Scanner()         # initialize BLE
+        devices = scanner.scan(4)   # scan for BLE devices for 4 seconds
 
         for dev in devices:
             scanData = dev.getScanData()
             for (adtype, desc, value) in scanData:
                 if desc == 'Complete Local Name':
                     if 'Thunder Sense #' in value:              # if the device is a TB2, then add it to tbsense
-                        sensors['Thunderboards'].push(ThunderboardSensor(dev))
+                        self.sensors['Thunderboards'].append(ThunderboardSensor(dev))
                     elif 'GVH5' in value:
-                        sensors['Govee'].push(GoveeSensor(dev))
+                        self.sensors['Govee'].append(GoveeSensor(dev))
 
-        return sensors
+    def scanGovee(self):
+        for device in self.sensors['Govee']:
+            scanData = device.getScanData()
 
-    def scanSensors(thunderboards):
+        return scanData
 
-    for devId, tb in thunderboards.items():
+    def scanThunderboard(self):
+        for device in self.sensors['Thunderboards']:
 
-        try:
-            value = tb.sensor['power_source_type'].read()   # TODO why do we need to know this? are some sensors only enabled when powered via USB?
-        except:
-            print ("scanSensor disconnected")
-            return
+            try:
 
-        if ord(value) == 0x04:
-            tb.coinCell = True
+                #for key in tb.sensor.keys():
+                for key in ('firmware', 'temperature','humidity','ambientLight','battery'): # TODO change this to a list of sensors passed in from the command line
+                    if key == 'temperature':
+                            data['temperature'] = tb.readTemperature()
+                            text += 'Temperature:\t{} C\n'.format(data['temperature'])
 
-        tb.filename="TB"
-        tb.filename+=tb.dev.addr.replace(":","_")
-        tb.filename+=".csv"
-        print ("filename={}".format(tb.filename))
-        if not os.path.isfile(tb.filename):
-            tb.csvfile=open(tb.filename, 'w+',1) 
-            tb.csvfile.write("Date Time,Temperature C, Humidity, Lux, Battery, Comment\n")
-        else:
-            tb.csvfile=open(tb.filename, 'a+',1) 
+                    elif key == 'humidity':
+                        data['humidity'] = tb.readHumidity()
+                        text += 'Humidity:\t{} %RH\n'.format(data['humidity'])
 
-     
-        text = ''
-        text += '\n' + tb.name + '\n'
-        data = dict()                   # the sensor data is stored in this dictionary
+                    elif key == 'ambientLight':
+                        data['ambientLight'] = tb.readAmbientLight()
+                        text += 'Ambient Light:\t{} Lux\n'.format(data['ambientLight'])
 
-        try:
+                    elif key == 'uvIndex':
+                        data['uvIndex'] = tb.readUvIndex()
+                        text += 'UV Index:\t{}\n'.format(data['uvIndex'])
 
-            #for key in tb.sensor.keys():
-            for key in ('firmware', 'temperature','humidity','ambientLight','battery'): # TODO change this to a list of sensors passed in from the command line
-                if key == 'temperature':
-                        data['temperature'] = tb.readTemperature()
-                        text += 'Temperature:\t{} C\n'.format(data['temperature'])
+                    elif key == 'co2' and tb.coinCell == False:
+                        data['co2'] = tb.readCo2()
+                        text += 'eCO2:\t\t{}\n'.format(data['co2'])
 
-                elif key == 'humidity':
-                    data['humidity'] = tb.readHumidity()
-                    text += 'Humidity:\t{} %RH\n'.format(data['humidity'])
+                    elif key == 'voc' and tb.coinCell == False:
+                        data['voc'] = tb.readVoc()
+                        text += 'tVOC:\t\t{}\n'.format(data['voc'])
 
-                elif key == 'ambientLight':
-                    data['ambientLight'] = tb.readAmbientLight()
-                    text += 'Ambient Light:\t{} Lux\n'.format(data['ambientLight'])
+                    elif key == 'sound':
+                        print ("before sound")
+                        try:
+                            data['sound'] = tb.readSound()
+                        except:
+                            print ("failed readsound")
+                        print ("after sound")
+                        text += 'Sound Level:\t{}\n'.format(data['sound'])
 
-                elif key == 'uvIndex':
-                    data['uvIndex'] = tb.readUvIndex()
-                    text += 'UV Index:\t{}\n'.format(data['uvIndex'])
+                    elif key == 'pressure':
+                        data['pressure'] = tb.readPressure()
+                        text += 'Pressure:\t{}\n'.format(data['pressure'])
 
-                elif key == 'co2' and tb.coinCell == False:
-                    data['co2'] = tb.readCo2()
-                    text += 'eCO2:\t\t{}\n'.format(data['co2'])
+                    elif key == 'battery':
+                        data['battery'] = tb.readBattery()
+                        text += 'Battery:\t{}\n'.format(data['battery'])
 
-                elif key == 'voc' and tb.coinCell == False:
-                    data['voc'] = tb.readVoc()
-                    text += 'tVOC:\t\t{}\n'.format(data['voc'])
+                    elif key == 'firmware':
+                        data['firmware'] = tb.readFirmware()
+                        text += 'Firmware:\t{}\n'.format(data['firmware'])
 
-                elif key == 'sound':
-                    print ("before sound")
-                    try:
-                        data['sound'] = tb.readSound()
-                    except:
-                        print ("failed readsound")
-                    print ("after sound")
-                    text += 'Sound Level:\t{}\n'.format(data['sound'])
+            except:
+                print ("Failed to get sensor data")
+                return
+            
+            print(text)
+            tb.csvfile.write("{}, {},{},{},{}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), data['temperature'],data['humidity'],data['ambientLight'],data['battery']))
 
-                elif key == 'pressure':
-                    data['pressure'] = tb.readPressure()
-                    text += 'Pressure:\t{}\n'.format(data['pressure'])
-
-                elif key == 'battery':
-                    data['battery'] = tb.readBattery()
-                    text += 'Battery:\t{}\n'.format(data['battery'])
-
-                elif key == 'firmware':
-                    data['firmware'] = tb.readFirmware()
-                    text += 'Firmware:\t{}\n'.format(data['firmware'])
-
-        except:
-            print ("Failed to get sensor data")
-            return
-        
-        print(text)
-        tb.csvfile.write("{}, {},{},{},{}\n".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), data['temperature'],data['humidity'],data['ambientLight'],data['battery']))
-
-        thunderboards[devId].ble_service.disconnect() # disconnect from the TB2 so it will go back to sleep and save battery power
-    return
+            thunderboards[devId].ble_service.disconnect() # disconnect from the TB2 so it will go back to sleep and save battery power
+        return
 
 def usage():
     print ("Usage: sudo python tbsense_scan.py [thlpg]")

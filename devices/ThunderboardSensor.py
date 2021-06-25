@@ -4,7 +4,7 @@ from bluepy.btle import *
 import struct
 import time
 
-class Thunderboard:
+class ThunderboardSensor:
     ''' Connects to a SiLabs Thunderboard and reads out all the characteristics and builds the self.sensor dictionary
         Methods are provided for reading the value of each sensor.
         TODO add more here about the units for each sensor.
