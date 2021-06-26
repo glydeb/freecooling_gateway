@@ -7,7 +7,7 @@ from GoveeSensor import GoveeSensor
 # DEBUG=0 turns off messages, the higher the number the more messages are printed to the screen
 DEBUG = 5
 
-class SensorScanner:
+class GoveeScanner(DefaultDelegate):
     """BLE scanner for temp/humidity sensors"""
     def __init__(self):
         self.sensors = {
@@ -114,3 +114,14 @@ if __name__ == '__main__':
             sensor_scanner.scanGovee()
 
             time.sleep(1)          # wait for this TB board to sleep before looking for the others
+
+scanner = Scanner().withDelegate(ScanDelegate())
+
+# mqtt section - replace localhost with your MQTT broker
+# client.connect("localhost",1883,60)
+
+# client.on_connect = on_connect
+# client.on_message = on_message
+
+while True:
+    scanner.scan(60.0, passive=True)

@@ -17,6 +17,6 @@ class GoveeSensor:
 
         for property in properties:
             if property.supportsRead():
-                print("uuid: {}, value: {}".format(property['uuid'], property.read()))
+                print("uuid: {}, value: {}".format(property.uuid, property.read()))
 
 
