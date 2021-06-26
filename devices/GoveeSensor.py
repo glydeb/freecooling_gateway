@@ -14,6 +14,9 @@ class GoveeSensor:
 
     def refreshReadings(self):
         properties = self.connection.getCharacteristics()
-        print(list(properties))
+
+        for property in properties:
+            if property.supportsRead():
+                print("uuid: {}, value: {}".format(property['uuid'], property.read()))
 
 
