@@ -1,8 +1,8 @@
 from bluepy.btle import *
-import struct
 import time, datetime
-import ThunderboardSensor
-import GoveeSensor
+from ThunderboardSensor import ThunderboardSensor
+from GoveeSensor import GoveeSensor
+
 
 # DEBUG=0 turns off messages, the higher the number the more messages are printed to the screen
 DEBUG = 5
@@ -33,9 +33,7 @@ class SensorScanner:
 
     def scanGovee(self):
         for device in self.sensors['Govee']:
-            scanData = device.getScanData()
-
-        return scanData
+            device.refreshReadings()
 
     def scanThunderboard(self):
         for device in self.sensors['Thunderboards']:
@@ -99,31 +97,20 @@ class SensorScanner:
             thunderboards[devId].ble_service.disconnect() # disconnect from the TB2 so it will go back to sleep and save battery power
         return
 
-def usage():
-    print ("Usage: sudo python tbsense_scan.py [thlpg]")
-    print (" Optional command line arguments select which sensors to read")
-    print (" NOTE ----- THE OPTIONAL COMMAND LINE ARGUMENTS have not been coded yet...")
-    print (" t=temperature in C")
-    print (" h=relative humidity in %")
-    print (" l=light level in Lux")
-    print (" p=barometric pressure in ?")
-    print (" g=gas sensor in ?")
-    print ("Version 0.9.1 28 Jan 2019")
-    print ("Requires being run as root to access the BLE chip")
-    print ("Scans for Silicon Labs Thunderboard Sense 2 BLE sensor boards (TB2)")
-    print ("When a TB2 board wakes up and begins advertising, this program will connect to it,")
-    print ("then read out the desired sensor readings and store the values in a .csv file")
-
-
 if __name__ == '__main__':
     ''' Program execution begins here '''
 
+    sensor_scanner = SensorScanner()
+
+    sensor_scanner.scan()
+
     while True:                                 # this program runs forever (hopefully)
-        thunderboards = getThunderboards()      # scan BLE looking for a TB2 
-        if len(thunderboards) == 0:
-            if DEBUG>6: print ("\b."),            # print out .s which makes it easy to visialize the time between samples
+        govee_count = len(sensor_scanner.sensors['Govee']) 
+        if govee_count == 0:
+            sensor_scanner.scan()
+            print ("\b."),            # print out .s which makes it easy to visialize the time between samples
         else:
-            print("{} Thunderboards found - begin scanning".format(len(thunderboards)))
-            scanSensors(thunderboards)          # scan the sensors
+            print("{} Govee H5101 found - begin scanning".format(govee_count))
+            sensor_scanner.scanGovee()
 
             time.sleep(1)          # wait for this TB board to sleep before looking for the others
