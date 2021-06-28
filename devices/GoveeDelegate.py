@@ -1,9 +1,8 @@
-from bluepy.btle import *
+import asyncio
+from bleak import *
 import time, datetime
 
-class GoveeDelegate(DefaultDelegate):
-    def __init__(self):
-        DefaultDelegate.__init__(self)
+class GoveeDelegate:
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         # Govee devices (it appears) have MAC addresses that begin with the following string
@@ -55,7 +54,12 @@ class GoveeDelegate(DefaultDelegate):
             signal = dev.rssi
             print("temp: {} degF, rh: {}%, battery: {}%, device: {}".format(temp_F, hum_percent, battery_percent, dev.addr[12:17]))
 
-scanner = Scanner().withDelegate(GoveeDelegate())
+async def run():
+    devices = await BleakScanner.discover()
+    for d in devices:
+        print(d, d.address, type(d.address))
+        if d.address[:8]=="A4:C1:38":
+            print(d.metadata)
 
-while True:
-    scanner.scan(60)
+loop = asyncio.get_event_loop()
+loop.run_until_complete(run())
