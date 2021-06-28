@@ -7,7 +7,7 @@ class GoveeDelegate(DefaultDelegate):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         # Govee devices (it appears) have MAC addresses that begin with the following string
-        if dev.addr[:8]=="a4:c1:38":          
+        if (dev.addr[:8]=="a4:c1:38" and isNewData):          
             
             # returns a list, of which the [2] item of the [3] tuple is manufacturing data
             adv_list = dev.getScanData()
