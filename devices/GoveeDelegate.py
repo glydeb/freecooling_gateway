@@ -13,9 +13,7 @@ class GoveeDelegate(DefaultDelegate):
             adv_list = dev.getScanData()
             print(adv_list)
             adv_manuf_data = adv_list[3][2]
-            print(adv_manuf_data)
-            
-            #print("manuf data = ", adv_manuf_data)
+            print("manuf data = ", adv_manuf_data)
 
             #this is the location of the encoded temp/humidity and battery data
             temp_hum_data = adv_manuf_data[6:12]
@@ -60,4 +58,4 @@ class GoveeDelegate(DefaultDelegate):
 scanner = Scanner().withDelegate(GoveeDelegate())
 
 while True:
-    scanner.scan(5.0)
+    scanner.scan(60)
