@@ -1,6 +1,7 @@
 import asyncio
 from bleak import *
 import time, datetime
+from struct import unpack_from
 
 class GoveeDelegate:
 
@@ -60,6 +61,22 @@ async def run():
         print(d, d.address, type(d.address))
         if d.address[:8]=="A4:C1:38":
             print(d.metadata)
+            mfg_data = d.metadata['manufacturer_data'][1]
+            temp_C, humidity, battery = decode_5101(mfg_data)
+            print("temp: {} degC, rh: {}%, battery: {}%".format(temp_C, humidity, battery))
+
+def decode_5101(bytestring):
+    useful_data = list(bytestring)[2:] # convert to integers and drop first 2 terms
+    battery = useful_data[3]
+    temp_and_humid_hexstr = "".join(map(myhex, useful_data[0:3])) # TODO: account for case where first term is two hex digits
+    t_and_h_int = int(temp_and_humid_hexstr, 16)
+    temp_C = t_and_h_int / 10000.0 
+    humidity = (t_and_h_int % 1000) / 10.0
+    return (temp_C, humidity, battery)
+
+
+def myhex(decimal_integer):
+    return hex(decimal_integer).replace('0x', '')
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(run())
