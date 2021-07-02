@@ -1,10 +1,13 @@
-def decode_temp(packet_value: int) -> float:
-    """Decode potential negative temperatures."""
+def decode_temp(combined_value: int) -> float:
+    """Decode potential negative temperatures and integrated humidity."""
     # https://github.com/Thrilleratplay/GoveeWatcher/issues/2
 
-    if packet_value & 0x800000: 
-        return float((packet_value ^ 0x800000) / -10000)
-    return float(packet_value / 10000)
+    if combined_value & 0x800000: 
+        return float(remove_humidity_from(combined_value ^ 0x800000) / -10000.0)
+    return float(remove_humidity_from(combined_value) / 10000.0)
+
+def remove_humidity_from(combined_value: int) -> int:
+    return combined_value - (combined_value % 1000)
 
 def decode_temp_and_humidity(hex_string: str) -> tuple:
     """Extract temp and humidity from 6 hex digits"""
