@@ -1,5 +1,7 @@
+import time
+
 def decode_temp(combined_value: int) -> float:
-    """Decode potential negative temperatures and integrated humidity."""
+    """Decode potential negative temperatures and integrated ."""
     # https://github.com/Thrilleratplay/GoveeWatcher/issues/2
 
     if combined_value & 0x800000: 
@@ -16,12 +18,12 @@ def decode_temp_and_humidity(hex_string: str) -> tuple:
     temp_C = decode_temp(value)
     return (temp_C, humidity)
 
-class GoveeSensor:
+class GoveeReading:
     # Takes a discovered device from bleak BleakScanner.discover()
-    def __init__(self, device):
+    def __init__(self, device, advertisement):
         self.name = device.name
         self.address = device.address
-        self.data = device.metadata['manufacturer_data'][1]
+        self.data = advertisement.manufacturer_data[1]
 
     def type(self):
         return self.name[3:7]
