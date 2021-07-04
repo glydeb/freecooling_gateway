@@ -26,7 +26,7 @@ class SensorScanner:
 
 # can be run standalone
 if __name__ == "__main__":
-    scanner = SensorScanner()
+    scanner = SensorScanner(30.0)
 
     loop = asyncio.get_event_loop()
     while True:
