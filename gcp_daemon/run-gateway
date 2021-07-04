@@ -14,14 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-python3 ./cloudiot_mqtt_gateway.py \
+python3 /home/glydeb/projects/freecooling_gateway/gcp_daemon/cloudiot_mqtt_gateway.py \
   --registry_id=free_cooling \
   --gateway_id=free_cooling_pi_nas_project \
   --cloud_region=us-central1 \
   --project_id=$GOOGLE_CLOUD_PROJECT \
-  --private_key_file=/home/pi/gcs_device_keys/rsa_private.pem \
+  --private_key_file=/home/glydeb/projects/freecooling_gateway/certs/rsa_private.pem \
   --algorithm=RS256 \
-  --ca_certs=/home/pi/gcs_device_keys/roots.pem \
+  --ca_certs=/home/glydeb/projects/freecooling_gateway/certs/roots.pem \
   --mqtt_bridge_hostname=mqtt.googleapis.com \
   --mqtt_bridge_port=8883 \
   --jwt_expires_minutes=20
