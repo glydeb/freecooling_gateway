@@ -14,8 +14,6 @@
 
 from __future__ import print_function
 
-import struct
-import random
 import sys
 import socket
 import time, datetime
@@ -29,13 +27,6 @@ PORT = 10000
 client_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 server_address = (ADDR, PORT)
-
-device_id = sys.argv[1]
-if not device_id:
-    sys.exit('The device id must be specified.')
-
-print('Bringing up device {}'.format(device_id))
-
 
 def SendCommand(sock, message, log=True):
     """ returns message received """
@@ -183,11 +174,13 @@ def RunAction(action):
 
 
 try:
-    random.seed()
     RunAction('detach')
     RunAction('attach')
 
     while True:
+        # get 10 readings
+        # publish messages
+        # clear readings
         h = 46.0
         t = 74.8
 

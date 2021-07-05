@@ -8,7 +8,7 @@ Uses bleak to scan for the GVH5101 - credit to the code of https://github.com/Th
 
 Google cloud services pub/sub has a minimum message size of 1000 bytes, so it makes sense to aggregate readings. I've chosen five minutes as the minimum time between publishes; that should be enough granularity to both respond to changing conditions in a timely manner, but not flood the system with too much activity.
 
-1. scan every 30 seconds for 15 seconds
+1. scan every 30 seconds for 5 minutes
 2. aggregate results by device
 3. at the end of 5 minutes:
     a. pause scanning
