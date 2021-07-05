@@ -13,18 +13,17 @@
 # limitations under the License.
 
 from __future__ import print_function
-from bluepy.btle import *
 
 import struct
 import random
 import sys
 import socket
 import time, datetime
-import Thunderboard
+from btle_scanner import SensorScanner
 
 from colors import bcolors
 
-ADDR = '192.168.0.110'
+ADDR = '192.168.0.109'
 PORT = 10000
 # Create a UDP socket
 client_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
