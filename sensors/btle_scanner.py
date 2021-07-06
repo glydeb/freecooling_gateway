@@ -22,7 +22,9 @@ class SensorScanner:
             self.readings[device.address] = GoveeReading(device, advertisement_data)
 
     def clear_readings(self):
+        extracted = list(self.readings.values())
         self.readings = dict()
+        return extracted
 
 # can be run standalone
 if __name__ == "__main__":
