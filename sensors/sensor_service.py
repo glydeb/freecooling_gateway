@@ -17,6 +17,7 @@ from __future__ import print_function
 import sys
 import socket
 import time, datetime
+import asyncio
 from btle_scanner import SensorScanner
 
 from colors import bcolors
@@ -45,9 +46,6 @@ def SendCommand(sock, message, log=True):
         print('received: "{}"'.format(response), file=sys.stderr)
 
     return response
-
-
-print('Bring up device 1')
 
 
 def MakeMessage(device_id, action, data=''):
@@ -174,10 +172,9 @@ def RunAction(action):
 
 
 try:
-    RunAction('detach')
-    RunAction('attach')
-
     while True:
+        RunAction('detach')
+        RunAction('attach')
         # get 10 readings
         # publish messages
         # clear readings
