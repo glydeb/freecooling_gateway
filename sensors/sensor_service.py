@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from __future__ import print_function
+from sensors.GoveeSensor import GoveeReading
 
 import sys
 import socket
@@ -20,14 +21,8 @@ import time, datetime
 import asyncio
 from btle_scanner import SensorScanner
 
-from colors import bcolors
+import bcolors
 
-ADDR = '192.168.0.109'
-PORT = 10000
-# Create a UDP socket
-client_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-server_address = (ADDR, PORT)
 
 def SendCommand(sock, message, log=True):
     """ returns message received """
@@ -162,40 +157,53 @@ def scanSensors(thunderboards):
             print("failed to find Thingspeak key {}".format(tb.filename))
     return
 
-def RunAction(action):
+async def RunAction(action, device_id):
     message = MakeMessage(device_id, action)
     if not message:
         return
     print('Send data: {} '.format(message))
-    event_response = SendCommand(client_sock, message)
+    event_response = await SendCommand(client_sock, message)
     print('Response {}'.format(event_response))
 
+async def SwitchDevices(old, new):
+    await RunAction('detach', old.device_id)
+    await RunAction('attach', new.device_id)
 
-try:
-    while True:
-        RunAction('detach')
-        RunAction('attach')
-        # get 10 readings
-        # publish messages
-        # clear readings
-        h = 46.0
-        t = 74.8
+def PublishData(data: GoveeReading):
+    temp_C, humidity, battery = data.readings()
+    sys.stdout.write(
+        '\r >>' + bcolors.CGREEN + bcolors.BOLD +
+        'Temp: {}, Hum: {}'.format(temp_C, humidity) + bcolors.ENDC + ' <<')
+    sys.stdout.flush()
 
-        h = "{:.3f}".format(h)
-        t = "{:.3f}".format(t)
-        sys.stdout.write(
-            '\r >>' + bcolors.CGREEN + bcolors.BOLD +
-            'Temp: {}, Hum: {}'.format(t, h) + bcolors.ENDC + ' <<')
-        sys.stdout.flush()
+    message = MakeMessage(
+        device_id, 'event', 'temperature={}, humidity={}'.format(temp_C, humidity))
 
-        message = MakeMessage(
-            device_id, 'event', 'temperature={}, humidity={}'.format(t, h))
+    msg_response = SendCommand(client_sock, message, True)
+    print('Response {}'.format(msg_response))
 
-        msg_response = SendCommand(client_sock, message, True)
-        print('Response {}'.format(msg_response))
-        time.sleep(2)
+async def main():
+    ADDR = '192.168.0.109'
+    PORT = 10000
 
+    server_address = (ADDR, PORT)
 
-finally:
-    print('closing socket', file=sys.stderr)
-    client_sock.close()
+    # Create a UDP socket
+    client_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    btle = SensorScanner(30.0) # scan for 30 seconds at a time
+    
+    try:
+        while True:
+            if len(btle.readings) > 0:
+                reports = btle.clear_readings()
+                for reading in reports:
+                    PublishData(reading)
+
+            await btle.scan()
+
+    finally:
+        print('closing socket', file=sys.stderr)
+        client_sock.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
