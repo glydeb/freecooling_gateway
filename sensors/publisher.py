@@ -17,7 +17,7 @@ class Publisher:
 
     async def process(self, reading: GoveeReading):
         if self.current_device_name != reading.device_name:
-            await self.switch_devices(self.device_name, reading.device_name)
+            await self.switch_devices(self.device_name, reading.name)
         message = self.format_event(reading)
 
         print('Send data: {} '.format(message))
@@ -56,9 +56,10 @@ class Publisher:
         return f'{{ "device" : "{sensor.name}", "action":"{action}" }}'
 
     async def switch_devices(self, old, new):
-        detach_message = self.format_other(old, 'detach')
+        if self.device_name != '':
+            detach_message = self.format_other(old, 'detach')
+            await self.send(detach_message)
         attach_message = self.format_other(new, 'attach')
-        await self.send(detach_message)
         await self.send(attach_message)
 
 async def main():
