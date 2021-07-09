@@ -1,5 +1,5 @@
 from __future__ import print_function
-from sensors.GoveeSensor import GoveeReading
+from GoveeSensor import GoveeReading
 
 import sys
 import socket
