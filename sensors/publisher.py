@@ -5,18 +5,16 @@ import sys
 import socket
 import time, datetime
 import asyncio
-import bcolors
 from btle_scanner import SensorScanner
 
 class Publisher:
-    def __init__(self, address, port):
+    def __init__(self, ip_address, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.address = address
-        self.port = port
+        self.address = (ip_address, port)
         self.device_name = ''
 
     async def process(self, reading: GoveeReading):
-        if self.current_device_name != reading.device_name:
+        if self.device_name != reading.name:
             await self.switch_devices(self.device_name, reading.name)
         message = self.format_event(reading)
 
@@ -35,7 +33,7 @@ class Publisher:
         if log:
             print('waiting for response', file=sys.stderr)
 
-        response, _ = await self.socket.recvfrom(4096)
+        response, _ = self.socket.recvfrom(4096)
 
         if log:
             print('received: "{}"'.format(response), file=sys.stderr)
@@ -44,16 +42,13 @@ class Publisher:
 
     def format_event(self, sensor: GoveeReading):
         temp_C, humidity, battery = sensor.readings()
-        sys.stdout.write(
-            '\r >>' + bcolors.CGREEN + bcolors.BOLD +
-            'Temp: {}, Hum: {}'.format(temp_C, humidity) + bcolors.ENDC + ' <<')
-        sys.stdout.flush()
+        print(f'sensor {sensor.name}: Temp: {temp_C}, Hum: {humidity}')
 
         data = f'temperature={temp_C}, humidity={humidity}'
         return f'{{ "device" : "{sensor.name}", "action":"event", "data" : "{data}" }}'
 
-    def format_other(self, sensor: GoveeReading, action):
-        return f'{{ "device" : "{sensor.name}", "action":"{action}" }}'
+    def format_other(self, sensor_name, action):
+        return f'{{ "device" : "{sensor_name}", "action":"{action}" }}'
 
     async def switch_devices(self, old, new):
         if self.device_name != '':
@@ -70,15 +65,16 @@ async def main():
     publisher = Publisher(ADDR, PORT)
 
     # create scanner
-    btle = SensorScanner(30.0) # scan for 30 seconds at a time
+    btle = SensorScanner(10.0) # scan for 30 seconds at a time
     
     try:
         while True:
             if len(btle.readings) > 0:
                 reports = btle.clear_readings()
                 for reading in reports:
-                    publisher.process(reading)
+                    await publisher.process(reading)
 
+            print('Starting new scan')
             await btle.scan()
 
     finally:
