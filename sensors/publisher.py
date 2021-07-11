@@ -51,9 +51,10 @@ class Publisher:
         return f'{{ "device" : "{sensor_name}", "action":"{action}" }}'
 
     async def switch_devices(self, old, new):
-        if self.device_name != '':
+        if self.device_name != new and self.device_name != '': 
             detach_message = self.format_other(old, 'detach')
             await self.send(detach_message)
+            self.device_name = new
         attach_message = self.format_other(new, 'attach')
         await self.send(attach_message)
 
