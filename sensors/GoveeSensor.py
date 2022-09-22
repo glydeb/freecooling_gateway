@@ -1,4 +1,5 @@
-import time
+from shutil import register_unpack_format
+
 
 def decode_temp(combined_value: int) -> float:
     """Decode potential negative temperatures and integrated ."""
@@ -25,13 +26,19 @@ class GoveeReading:
         self.address = device.address
         self.data = advertisement.manufacturer_data[1]
 
-    def type(self):
+    def model(self):
         return self.name[3:7]
 
     def readings(self):
-        if self.type() == "5101":
+        if self.model() == "5101":
             return self.decode_5101()
         # support for more sensor types will be added here
+    def battery(self):
+        return list(self.data)[5]
+
+    def temp_F(self):
+        temp_C, humidity = decode_temp_and_humidity(self.data.hex()[4:10])   
+        return (temp_C * 9/5) + 32 
 
     def decode_5101(self):
         temp_C, humidity = decode_temp_and_humidity(self.data.hex()[4:10])

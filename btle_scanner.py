@@ -1,7 +1,6 @@
 
 import asyncio
-from tkinter import W
-from GoveeSensor import GoveeReading
+from sensors.GoveeSensor import GoveeReading
 from bleak import *
 import time
 
@@ -19,7 +18,6 @@ class SensorScanner:
         return self.readings
 
     async def detection_callback(self, device, advertisement_data):
-        print('detected')
         if device.name[:7] == "GVH5101":
             self.readings[device.address] = GoveeReading(device, advertisement_data)
 
@@ -28,17 +26,15 @@ class SensorScanner:
         self.readings = dict()
         return extracted
 
-async def scan():
-    scanner = SensorScanner(30.0)
-    while True:
-        sensor_readings = await scanner.scan()
-        # print and clear readings
-        print(sensor_readings)
-        scanner.clear_readings()
-        # for reading in sensor_readings:
-        #     temp_C, humidity, battery 
-        # ("sensor: {}, temp: {} degC, rh: {}%, battery: {}%".format(sensor.name, temp_C, humidity, battery))
-
 # can be run standalone
 if __name__ == "__main__":
-    asyncio.run(scan())
+    scanner = SensorScanner(30.0)
+
+    while True:
+        sensors = asyncio.run_until_complete(scanner.scan())
+        # print and clear readings
+        for sensor in sensors:
+            temp_C, humidity, battery = sensor.readings()
+            ("sensor: {}, temp: {} degC, rh: {}%, battery: {}%".format(sensor.name, temp_C, humidity, battery))
+        scanner.clear_readings()
+        # print(sensor_readings)
