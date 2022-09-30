@@ -2,7 +2,6 @@
 import asyncio
 from sensors.GoveeSensor import GoveeReading
 from bleak import *
-import time
 
 class SensorScanner:
     def __init__(self, delay: float):
@@ -31,10 +30,10 @@ if __name__ == "__main__":
     scanner = SensorScanner(30.0)
 
     while True:
-        sensors = asyncio.run_until_complete(scanner.scan())
+        sensors = asyncio.run(scanner.scan())
         # print and clear readings
-        for sensor in sensors:
+        for sensor in sensors.values():
             temp_C, humidity, battery = sensor.readings()
-            ("sensor: {}, temp: {} degC, rh: {}%, battery: {}%".format(sensor.name, temp_C, humidity, battery))
+            print("sensor: {}, temp: {} degC, rh: {}%, battery: {}%".format(sensor.name, temp_C, humidity, battery))
         scanner.clear_readings()
         # print(sensor_readings)
