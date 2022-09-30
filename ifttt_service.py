@@ -1,6 +1,4 @@
 import requests
-import os
-import sys
 from sensors.GoveeSensor import GoveeReading
 
 class IFTTTService:
