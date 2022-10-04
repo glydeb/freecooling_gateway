@@ -13,10 +13,10 @@ class FridgeWatcher:
         self.batt = batt_limit
         self.scanner = SensorScanner(60.0)
         self.delay = 300
-        self.last_alert_day = time.gmtime(time.time())['tm_mday']
+        self.last_alert_day = time.gmtime(time.time())[2] # day of month
     
     def reset_last_alert(self):
-        self.last_alert_day = time.gmtime(time.time())['tm_mday']
+        self.last_alert_day = time.gmtime(time.time())[2] # day of month
 
     # set delay until next scan
     def set_delay(self, report, alerted=False):
