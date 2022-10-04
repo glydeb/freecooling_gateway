@@ -42,7 +42,7 @@ class FridgeWatcher:
             self.discover(retries - 1)
 
     async def monitor(self, retries: int=2):
-        asyncio.sleep(self.delay)
+        await asyncio.sleep(self.delay)
         reports = await self.scanner.scan()
         status = self.health_check(reports)
         return status
