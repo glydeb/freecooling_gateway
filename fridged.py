@@ -4,11 +4,10 @@ import asyncio
 from fridge_monitor import FridgeWatcher
 from ifttt_service import IFTTTService
 
-SENSOR_NAME =  "GVH5101_3574"
+SENSOR_NAME =  "GVH5101_334C"
 EVENT_NAME = "fridge_alert"
 MAX_TEMP_F = 20.0
 MIN_BATTERY = 25
-EVENT_NAME = "fridge_alert"
 
 # initialize web service
 def ifttt():
