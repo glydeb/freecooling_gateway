@@ -30,16 +30,16 @@ async def main():
 
     try:
         # Notify of monitoring start/initial status
-        await notifier.post(f'{SENSOR_NAME} monitoring established', initial_readings)
+        notifier.post(f'{SENSOR_NAME} monitoring established', initial_readings)
 
         # Monitoring loop
         while True:
             alert, readings = await watcher.monitor()
             if alert != "":
-                await notifier.post(alert, readings)
+                notifier.post(alert, readings)
     finally:
         # Fault handling
-        await notifier.post(f'{SENSOR_NAME} monitoring disabled')
+        notifier.post(f'{SENSOR_NAME} monitoring disabled')
 
 if __name__ == "__main__":
     asyncio.run(main())
