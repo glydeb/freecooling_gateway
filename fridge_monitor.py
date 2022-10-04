@@ -69,5 +69,10 @@ class FridgeWatcher:
             print("sending battery alarm")
             alert = 'Sensor Battery Failing!'
 
+        if alert != "":
+            self.delay = 3600
+        else:
+            self.delay = 300
+        
         self.scanner.clear_readings()
         return alert, readings
