@@ -1,52 +1,73 @@
-import requests
 import time
-import os
-import sys
 import asyncio
 from btle_scanner import SensorScanner
 from sensors.GoveeSensor import GoveeReading
 
-class IFTTTService:
-    def __init__(self, url):
-        self.url = url
+class DeviceNotFoundError(Exception):
+    pass
 
-    def post(self, message, report: GoveeReading):
-        temp_C, humidity, battery = report.readings()
-        body = {"value1": message,"value2": f'{report.temp_F():.1f} deg F', "value3": f'{battery}%'}
-        requests.post(self.url, params=body)
+class FridgeWatcher:
+    def __init__(self, sensor: str, temp_limit: float=20.0, batt_limit: int=30):
+        self.sensor = sensor
+        self.temp = temp_limit
+        self.batt = batt_limit
+        self.scanner = SensorScanner(60.0)
+        self.delay = 300
+        self.last_alert_day = time.gmtime(time.time())['tm_mday']
+    
+    def reset_last_alert(self):
+        self.last_alert_day = time.gmtime(time.time())['tm_mday']
 
-web_key = os.environ.get('IFTTT_KEY')
+    # set delay until next scan
+    def set_delay(self, report, alerted=False):
+        if alerted:
+            self.delay = 1800
+        else:
+            # TODO: scale to safety margin from setpoints
+            self.delay = 300
 
-# If there's no key present, we can't request to IFTTT
-if web_key == None:
-    print("IFTTT_KEY environment variable not set!")
-    sys.exit(1)
+    async def discover(self, retries: int=3):
+        reports = await self.scanner.scan()
+        # for now, just loop until you find the right reading
+        for report in reports.values():
+            if report.name == self.sensor:
+                self.set_delay(report)
+                self.reset_last_alert()
+                return report
+        if retries == 0:
+            print("device not found - exiting")
+            raise DeviceNotFoundError
+        else:
+            print("device not found - looking again")
+            self.discover(retries - 1)
 
+    async def monitor(self, retries: int=2):
+        asyncio.sleep(self.delay)
+        reports = await self.scanner.scan()
+        status = self.health_check(reports)
+        return status
 
-SENSOR_NAME =  "GVH5101_3574"
-EVENT_NAME = "fridge_alert"
-IFTTT_URL = "https://maker.ifttt.com/trigger/{}/with/key/{}".format(EVENT_NAME, web_key)
-STARTUP_PARAMS={"value1":"monitoring starting","value2":"none yet","value3":"none yet"}
+    def our_sensor_report(self, reports: dict):
+        our_report = None
+        for report in reports.values():
+            if report.name == self.sensor:
+                our_report = report
+        return our_report
 
-scanner = SensorScanner(30.0)
-# startup report
-requests.post(IFTTT_URL, params = STARTUP_PARAMS)
-reporter = IFTTTService(IFTTT_URL)
+    def health_check(self, reports: dict):
+        alert = ""
+        readings = self.our_sensor_report(reports)
+        if readings == None:
+            print("Sending loss of contact")
+            alert = f'Lost contact with {self.sensor}'
 
+        elif readings.temp_F() > 32.1:
+            print("sending temp alarm")
+            alert = 'High temp alert!'
 
-while True:
-    reports = asyncio.run(scanner.scan())
-    # for now, just loop until you find the right reading
-    for report in reports.values():
-        if report.name == SENSOR_NAME:
-           print("reporting for temp:{}, battery:{}%".format(report.temp_F(), report.battery()))
+        elif readings.battery() < 50:
+            print("sending battery alarm")
+            alert = 'Sensor Battery Failing!'
 
-           if report.temp_F() > 32.1:
-               print("sending temp alarm")
-               reporter.post('Fridge too warm!', report)
-
-           elif report.battery() < 50:
-               print("sending battery alarm")
-               reporter.post('Sensor Battery Failing!', report)
-
-    scanner.clear_readings()
+        self.scanner.clear_readings()
+        return alert, readings
