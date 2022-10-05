@@ -1,0 +1,17 @@
+[Unit]
+Description=Freezer BLE Monitor
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/home/relay/freecooling_gateway/.venv/bin/python3 /home/relay/freecooling_gateway/fridged.py >> /home/relay/fridge.log
+Restart=on-failure
+RestartSec=500s
+StartLimitIntervalSec=1800
+StartLimitBurst=2
+Environment="IFTTT_KEY=bYwDo3SMhMNriTAkvgRlHu"
+Environment="PYTHONPATH=/home/relay/.local/lib/python3.9/site-packages:/usr/local/lib/python3.9/dist-packages:/usr/lib/python3/dist-packages"
+WorkingDirectory=/home/relay/freecooling_gateway/.venv/bin
+
+[Install]
+WantedBy=multi-user.target
