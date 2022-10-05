@@ -21,7 +21,8 @@ class FridgeWatcher:
     # set delay until next scan
     def set_delay(self, report, alerted=False):
         if alerted:
-            self.delay = 1800
+            # scale up to daily alerts if not corrected
+            self.delay = max([self.delay * 4, 3600 * 24])
         else:
             # TODO: scale to safety margin from setpoints
             self.delay = 300
@@ -55,24 +56,23 @@ class FridgeWatcher:
         return our_report
 
     def health_check(self, reports: dict):
-        alert = ""
+        healthy = True
         readings = self.our_sensor_report(reports)
         if readings == None:
             print("Sending loss of contact")
             alert = f'Lost contact with {self.sensor}'
+            healthy = False
 
         elif readings.temp_F() > 32.1:
             print("sending temp alarm")
             alert = 'High temp alert!'
+            healthy = False
 
         elif readings.battery() < 50:
             print("sending battery alarm")
             alert = 'Sensor Battery Failing!'
+            healthy = False
 
-        if alert != "":
-            self.delay = 3600
-        else:
-            self.delay = 300
-        
+        self.set_delay(readings, healthy)
         self.scanner.clear_readings()
         return alert, readings
